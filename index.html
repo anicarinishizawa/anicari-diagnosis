@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>動物×キャリア診断 | AniCari</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1A1A2E;
+    --cream: #FAF8F3;
+    --sage: #2D6A4F;
+    --sage-light: #D8EFE4;
+    --violet: #4A3F8F;
+    --violet-light: #EAE7F8;
+    --amber: #D47C0F;
+    --amber-light: #FDF3DC;
+    --border: rgba(26,26,46,0.1);
+    --radius: 16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ===== ヘッダー ===== */
+  header {
+    width: 100%;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--cream);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--ink);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-weight: 900; font-size: 18px; letter-spacing: .02em; }
+  .logo-sub { font-size: 11px; color: rgba(26,26,46,.45); letter-spacing: .08em; margin-left: 2px; }
+
+  /* ===== メインコンテナ ===== */
+  main {
+    width: 100%;
+    max-width: 560px;
+    padding: 32px 20px 60px;
+    flex: 1;
+  }
+
+  /* ===== プログレスバー ===== */
+  .prog-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .prog-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--violet), var(--sage));
+    border-radius: 2px;
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ===== ステップ ===== */
+  .step { display: none; animation: fadeUp .35s ease; }
+  .step.active { display: block; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ===== 生年月日 ===== */
+  .step-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--violet);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .step-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    line-height: 1.35;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .step-sub { font-size: 13px; color: rgba(26,26,46,.5); margin-bottom: 24px; }
+  .birth-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.2fr;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .birth-row select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231A1A2E' stroke-opacity='.4' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .birth-row select:focus { outline: none; border-color: var(--violet); }
+  .err { font-size: 12px; color: #C0392B; margin-top: 6px; display: none; }
+
+  /* ===== 質問 ===== */
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .q-no-badge {
+    font-size: 11px; font-weight: 700;
+    background: var(--ink); color: white;
+    padding: 3px 9px; border-radius: 20px;
+    letter-spacing: .06em;
+  }
+  .q-counter { font-size: 12px; color: rgba(26,26,46,.4); }
+  .q-text {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+  .q-opts { display: flex; flex-direction: column; gap: 9px; }
+  .q-opt {
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: white;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: all .15s;
+    width: 100%;
+  }
+  .q-opt:hover { border-color: var(--sage); background: var(--sage-light); }
+  .q-opt.selected { border-color: var(--sage); background: var(--sage-light); font-weight: 500; }
+  .nav-row { display: flex; align-items: center; margin-top: 18px; }
+  .back-btn {
+    background: none; border: none;
+    font-family: inherit; font-size: 13px;
+    color: rgba(26,26,46,.4);
+    cursor: pointer; padding: 0;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .back-btn:hover { color: var(--ink); }
+
+  /* ===== ボタン ===== */
+  .btn-primary {
+    width: 100%;
+    padding: 15px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    margin-top: 18px;
+  }
+  .btn-primary:hover { opacity: .88; }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-outline {
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    margin-top: 10px;
+  }
+  .btn-outline:hover { border-color: var(--ink); background: white; }
+
+  /* ===== ローディング ===== */
+  #loading {
+    text-align: center;
+    padding: 48px 0;
+  }
+  .dots { display: inline-flex; gap: 5px; }
+  .dots span {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--violet);
+    animation: blink 1.3s infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: .2s; background: var(--sage); }
+  .dots span:nth-child(3) { animation-delay: .4s; background: var(--amber); }
+  @keyframes blink { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
+  .loading-text { font-size: 13px; color: rgba(26,26,46,.4); margin-top: 14px; }
+
+  /* ===== 結果 ===== */
+  #result-area { display: none; }
+  .result-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .tag {
+    font-size: 12px; font-weight: 700;
+    padding: 5px 12px; border-radius: 20px;
+    letter-spacing: .04em;
+  }
+  .tag-animal { background: var(--violet-light); color: var(--violet); }
+  .tag-job { background: var(--sage-light); color: var(--sage); }
+
+  .ai-card {
+    background: var(--ink);
+    color: white;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .ai-card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .ai-card-body { font-size: 14px; line-height: 1.85; opacity: .85; }
+
+  /* 解説カード */
+  .guide-card {
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    border: 1.5px solid var(--border);
+    background: white;
+  }
+  .guide-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .guide-badge {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px;
+  }
+  .badge-animal { background: var(--violet-light); color: var(--violet); }
+  .badge-job { background: var(--sage-light); color: var(--sage); }
+  .guide-name { font-size: 16px; font-weight: 700; }
+  .guide-section-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .08em;
+    margin: 10px 0 4px;
+  }
+  .label-job { color: var(--sage); }
+  .label-fit { color: var(--amber); }
+  .guide-text { font-size: 13px; line-height: 1.75; color: rgba(26,26,46,.75); }
+  .kw-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .kw {
+    font-size: 11px; padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--cream);
+    color: rgba(26,26,46,.55);
+    border: 1px solid var(--border);
+  }
+
+  /* ===== フッター ===== */
+  footer {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: rgba(26,26,46,.3);
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">🐾</div>
+  <div>
+    <div class="logo-text">AniCari</div>
+    <div class="logo-sub">動物×キャリア診断</div>
+  </div>
+</header>
+
+<main>
+  <div class="prog-wrap"><div class="prog-bar" id="bar" style="width:0%"></div></div>
+
+  <!-- Step 1: 生年月日 -->
+  <div class="step active" id="s1">
+    <div class="step-label">Step 1 of 3 — 動物占い</div>
+    <h1 class="step-title">生年月日を<br>入力してください</h1>
+    <p class="step-sub">動物占いであなたの動物タイプを判定します</p>
+    <div class="birth-row">
+      <select id="by"><option value="">年を選択</option></select>
+      <select id="bm"><option value="">月</option></select>
+      <select id="bd"><option value="">日</option></select>
+    </div>
+    <div class="err" id="derr">生年月日をすべて選択してください</div>
+    <button class="btn-primary" onclick="startQuiz()">動物を判定して診断へ →</button>
+  </div>
+
+  <!-- Step 2: アンケート -->
+  <div class="step" id="sq">
+    <div class="q-meta">
+      <span class="q-no-badge" id="qno-badge">Q1</span>
+      <span class="q-counter" id="qcounter">1 / 10</span>
+    </div>
+    <p class="q-text" id="qtxt"></p>
+    <div class="q-opts" id="qopts"></div>
+    <div class="nav-row">
+      <button class="back-btn" onclick="prevQ()">← 戻る</button>
+    </div>
+  </div>
+
+  <!-- Step 3: 結果 -->
+  <div class="step active" id="sr" style="display:none">
+    <div id="loading">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <p class="loading-text">AIがあなたの診断を生成中...</p>
+    </div>
+    <div id="result-area">
+      <div class="result-tags">
+        <span class="tag tag-animal" id="rtag-a"></span>
+        <span class="tag tag-job" id="rtag-j"></span>
+      </div>
+      <div class="ai-card">
+        <p class="ai-card-title" id="rtitle"></p>
+        <p class="ai-card-body" id="rbody"></p>
+      </div>
+      <!-- 動物解説 -->
+      <div class="guide-card">
+        <div class="guide-header">
+          <span class="guide-badge badge-animal">🐾 動物タイプ</span>
+          <span class="guide-name" id="g-aname"></span>
+        </div>
+        <p class="guide-text" id="g-adesc"></p>
+        <div class="kw-row" id="g-akw"></div>
+      </div>
+      <!-- 職種解説 -->
+      <div class="guide-card">
+        <div class="guide-header">
+          <span class="guide-badge badge-job">💼 職種解説</span>
+          <span class="guide-name" id="g-jname"></span>
+        </div>
+        <p class="guide-section-label label-job">仕事内容</p>
+        <p class="guide-text" id="g-jdesc"></p>
+        <p class="guide-section-label label-fit">向いている人</p>
+        <p class="guide-text" id="g-jfit"></p>
+        <div class="kw-row" id="g-jkw"></div>
+      </div>
+      <button class="btn-outline" onclick="restart()">もう一度診断する</button>
+    </div>
+  </div>
+</main>
+
+<footer>© 2026 AniCari — 動物×キャリア診断</footer>
+
+<script>
+// ===== マスターデータ =====
+const ANIMAL_GUIDE = {
+  'チーター': { desc:'行動力と決断力に優れたリーダー気質。目標を定めたら一直線に突き進む。スピード感があり、変化を恐れない挑戦者タイプ。', kw:['行動力','決断力','スピード','挑戦'] },
+  'たぬき':   { desc:'場の空気を読む天才で、誰とでも仲良くなれる社交派。愛嬌があり、周囲を和ませる癒し系の存在。柔軟な対応力が持ち味。', kw:['社交的','愛嬌','柔軟性','協調性'] },
+  '猿':       { desc:'知的好奇心が旺盛で、何でも器用にこなすマルチプレイヤー。ユーモアがあり、周囲を引きつけるエンターテイナー的な魅力を持つ。', kw:['好奇心旺盛','器用','ユーモア','多才'] },
+  'コアラ':   { desc:'穏やかで安定感があり、人から信頼を集める縁の下の力持ち。こだわりが強く、自分のペースを大切にする職人気質。', kw:['安定感','信頼','こだわり','職人気質'] },
+  '黒ひょう': { desc:'クールで独自のセンスを持つ個性派。直感が鋭く、自分の美学を貫く。ひとりで集中して取り組む力に優れたアーティスト的な存在。', kw:['個性的','直感力','審美眼','集中力'] },
+  '虎':       { desc:'情熱的でエネルギッシュ。一度決めたら妥協しない強さと、仲間を守るための熱い心を持つ。周囲を引っ張る推進力がある。', kw:['情熱','推進力','強さ','リーダー'] },
+  'こじか':   { desc:'繊細で感受性が豊か。人や動物の気持ちに敏感で、思いやりが深い。純粋さと丁寧さで周囲から愛される存在。', kw:['繊細','共感力','思いやり','丁寧'] },
+  'ゾウ':     { desc:'記憶力と洞察力に優れた知性派。温厚でどっしりとした安心感があり、長期的な視点で物事を考えられる頼れる存在。', kw:['知性','洞察力','安心感','長期思考'] },
+  '狼':       { desc:'独立心が強く、自分の信念を曲げない一匹狼タイプ。仲間への忠誠心は厚く、組織の中では縁の下でしっかり支える力を持つ。', kw:['独立心','忠誠心','信念','粘り強さ'] },
+  'ひつじ':   { desc:'温かみと優しさで周囲に癒しをもたらす存在。協調性が高く、争いを好まない平和主義者。人のために動ける献身性が強み。', kw:['温かみ','協調性','献身','平和主義'] },
+  'ペガサス': { desc:'夢と理想を高く持つロマンチスト。自由を愛し、想像力と独創性で新しい世界を切り拓く。直感と感性で動くタイプ。', kw:['理想主義','自由','独創性','感性'] },
+  'ライオン':  { desc:'堂々とした存在感と強いカリスマ性を持つ王様タイプ。プライドが高く、責任感も強い。人の上に立って引っ張っていく力がある。', kw:['カリスマ','責任感','プライド','統率力'] },
+};
+
+const JOB_GUIDE = {
+  '獣医':             { desc:'動物の病気・怪我の診断・治療を行う医療の専門家。高度な医学知識と技術が必要で、動物の命を救う責任ある職業。獣医師免許の取得が必須。', fit:'冷静な判断力と論理的思考が得意な人。プレッシャーのある状況でも落ち着いて行動でき、生涯学び続ける向上心がある人に向いています。', kw:['診断・治療','獣医師免許','医療','命を救う'] },
+  '愛玩動物看護師':   { desc:'獣医師をサポートしながら動物の看護・処置補助を行う。動物に寄り添い、入院中のケアや飼い主への説明も担う。愛玩動物看護師の国家資格がある。', fit:'動物と人の両方に寄り添える共感力の高い人。チームで動くことが好きで、細やかな気配りができる人。人の不安を和らげるコミュニケーションが得意な人に向いています。', kw:['看護','サポート','飼い主対応','国家資格'] },
+  'トレーナー':       { desc:'犬や猫などの行動改善・しつけ・訓練を専門に行う。問題行動の解消から警察犬・盲導犬の育成まで幅広く活躍。行動学の知識が求められる。', fit:'粘り強く根気よく物事に取り組める人。動物の個性を尊重しながら柔軟に対応できる人。成長を見届ける喜びをモチベーションにできる人に向いています。', kw:['しつけ','行動改善','訓練','行動学'] },
+  'シッター':         { desc:'飼い主が不在の間、ペットの世話・散歩を代行する仕事。動物との1対1の信頼関係を築きながら、飼い主の安心を支える。', fit:'動物と過ごす時間そのものが好きな人。飼い主との信頼関係を大切にでき、責任感が強い人。自由な働き方を好み、独立志向がある人に向いています。', kw:['世話代行','信頼関係','散歩','安心サポート'] },
+  'トリマー':         { desc:'犬や猫の毛のカット・シャンプー・爪切りなどの美容を専門に行う。動物の美しさを引き出しながら健康チェックも担う、センスと技術の職業。', fit:'美的センスや手先の器用さがある人。完成度にこだわり、丁寧に仕上げることに喜びを感じる人。動物をきれいにすることで飼い主を喜ばせたい人に向いています。', kw:['グルーミング','美容','技術','健康チェック'] },
+  '飼育員':           { desc:'動物園・水族館・サファリパークなどで動物の飼育・管理・健康管理を担う。希少動物の繁殖や生態研究にも携わる専門職。', fit:'動物の生態や行動に純粋な興味と探究心がある人。体を使った仕事が好きで、地道なルーティン作業も苦にならない人。自然や生き物の保全に使命感を持てる人に向いています。', kw:['飼育管理','生態研究','繁殖','希少動物'] },
+  'ペットショップ':   { desc:'ペットと飼い主の最良の出会いをサポートし、動物の販売・飼育グッズの提案・飼い方アドバイスを行う。接客力と動物知識の両方が必要。', fit:'人と話すことが好きで、初対面でもすぐに打ち解けられる人。動物の知識を活かして飼い主を支えることにやりがいを感じる人。明るくてフットワークが軽い人に向いています。', kw:['接客','マッチング','飼育アドバイス','販売'] },
+  '動物用品メーカー': { desc:'ペットフード・おもちゃ・医療用品など動物関連の商品を開発・製造・販売する企業で働く。マーケティングや商品企画で業界全体に影響を与える。', fit:'アイデアを形にすることが好きで、企画・マーケティングに興味がある人。動物への愛情をビジネスで表現したい人。業界全体に影響を与えるスケールの大きな仕事がしたい人に向いています。', kw:['商品開発','マーケティング','企画','業界貢献'] },
+};
+
+const QS = [
+  { q:'動物に関するニュースを見ているとき、思わず前のめりになるのはどんな内容？',
+    opts:[{t:'新しい治療法や手術技術の進歩に関するニュース',j:'獣医'},{t:'入院中の動物が回復して飼い主と再会する感動の話',j:'愛玩動物看護師'},{t:'野生動物の生態や絶滅危惧種の保護活動の話',j:'飼育員'},{t:'ペット業界の新サービスや市場トレンドの話',j:'ペットショップ'}] },
+  { q:'友人から「あなたってどんな人？」と聞かれたとき、自分に一番近いのは？',
+    opts:[{t:'細かいところまで丁寧に仕上げるこだわり派',j:'トリマー'},{t:'生き物や自然のことなら何時間でも話せる',j:'飼育員'},{t:'初対面でもすぐ打ち解けられるコミュ力がある',j:'ペットショップ'},{t:'アイデアを形にして世の中に届けたい企画派',j:'動物用品メーカー'}] },
+  { q:'チームで何か問題が起きたとき、自然とどんな役割になる？',
+    opts:[{t:'原因を冷静に分析して解決策を提示する',j:'獣医'},{t:'落ち込んでいる人に寄り添ってフォローする',j:'愛玩動物看護師'},{t:'空間や見た目を整えて場の雰囲気を良くする',j:'トリマー'},{t:'長期的な視点でデータや実績をまとめる',j:'動物用品メーカー'}] },
+  { q:'動物と過ごす時間で、自分が一番「充実した」と感じる瞬間は？',
+    opts:[{t:'動物の体の変化や反応を細かく観察しているとき',j:'飼育員'},{t:'初めて会う動物がだんだん心を開いてくれるとき',j:'シッター'},{t:'声かけや合図に動物がぴたりと反応したとき',j:'トレーナー'},{t:'動物と飼い主がお互いを信頼し合っているのを感じるとき',j:'ペットショップ'}] },
+  { q:'新しい知識を学ぶとき、あなたはどんなスタイルが一番はかどる？',
+    opts:[{t:'論文や専門書をじっくり読み込んで理解を深める',j:'獣医'},{t:'現場で体を動かしながら実践的に覚える',j:'愛玩動物看護師'},{t:'ものづくりや試作をしながら改良を重ねる',j:'動物用品メーカー'},{t:'フィールドや自然の中で直接観察して学ぶ',j:'飼育員'}] },
+  { q:'何も予定がない休日、気づいたら一番長く時間を使っていることは？',
+    opts:[{t:'好きなものをとことんきれいに整えたり手入れしている',j:'トリマー'},{t:'動物や生き物の動画・本・ドキュメンタリーを見続けている',j:'飼育員'},{t:'友人や家族とおしゃべりしたり、誰かの相談に乗っている',j:'ペットショップ'},{t:'アイデアをメモしたり、何か新しいものを調べて企画している',j:'動物用品メーカー'}] },
+  { q:'何かに失敗したとき、自分がまず感じることに近いのは？',
+    opts:[{t:'「なぜ失敗したか」を徹底的に原因分析したくなる',j:'獣医'},{t:'「相手（動物や人）に申し訳なかった」という気持ちが強くなる',j:'愛玩動物看護師'},{t:'「次はもっと上手くやれるはず」とすぐ前向きに切り替えられる',j:'トレーナー'},{t:'「もっと見た目や仕上がりにこだわればよかった」と思う',j:'トリマー'}] },
+  { q:'仕事でストレスを感じるとしたら、どんな状況が一番きつい？',
+    opts:[{t:'根拠なく「なんとなく」で動かなければならないとき',j:'獣医'},{t:'動物や人の感情を無視して進めなければならないとき',j:'シッター'},{t:'動物の個性を無視した画一的なルールを押しつけられるとき',j:'トレーナー'},{t:'人と関わる機会がなく黙々と作業するだけのとき',j:'ペットショップ'}] },
+  { q:'子どもの頃、夢中になって遊んでいたことに近いのは？',
+    opts:[{t:'ミニチュアや人形など、細部までこだわって飾り付けていた',j:'トリマー'},{t:'虫や動物を捕まえて観察したり、図鑑を読み漁っていた',j:'飼育員'},{t:'お店屋さんごっこや接客ごっこが好きだった',j:'ペットショップ'},{t:'ブロックやレゴで新しいものを設計・製作するのが好きだった',j:'動物用品メーカー'}] },
+  { q:'一番身近な人（家族・友人）に「あなたのここが好き」と言われたいのはどれ？',
+    opts:[{t:'どんな状況でも冷静で、頼りになる判断ができるところ',j:'獣医'},{t:'誰に対しても優しく、そばにいるだけで安心させてくれるところ',j:'愛玩動物看護師'},{t:'どんな相手とも上手くやれる、場を明るくする力があるところ',j:'シッター'},{t:'いつも新しい発想で、周りを驚かせるアイデアを出せるところ',j:'動物用品メーカー'}] },
+];
+
+const JOBS = Object.keys(JOB_GUIDE);
+const EMO = {'チーター':'🐆','たぬき':'🦝','猿':'🐵','コアラ':'🐨','黒ひょう':'🐈','虎':'🐯','こじか':'🦌','ゾウ':'🐘','狼':'🐺','ひつじ':'🐑','ペガサス':'🦄','ライオン':'🦁'};
+
+let animal='', curQ=0, ans=[], sc={};
+
+// 初期化
+(function(){
+  JOBS.forEach(j=>sc[j]=0);
+  const ys=document.getElementById('by');
+  for(let y=2010;y>=1940;y--) ys.innerHTML+=`<option value="${y}">${y}年</option>`;
+  const ms=document.getElementById('bm');
+  for(let m=1;m<=12;m++) ms.innerHTML+=`<option value="${m}">${m}月</option>`;
+  const ds=document.getElementById('bd');
+  for(let d=1;d<=31;d++) ds.innerHTML+=`<option value="${d}">${d}日</option>`;
+})();
+
+function setBar(p){ document.getElementById('bar').style.width=p+'%'; }
+function show(id){
+  document.querySelectorAll('.step').forEach(s=>{ s.classList.remove('active'); s.style.display=''; });
+  document.getElementById(id).classList.add('active');
+  if(id==='sr'){ document.getElementById('sr').style.display='block'; }
+}
+
+async function startQuiz(){
+  const y=parseInt(document.getElementById('by').value);
+  const m=parseInt(document.getElementById('bm').value);
+  const d=parseInt(document.getElementById('bd').value);
+  if(!y||!m||!d){ document.getElementById('derr').style.display='block'; return; }
+  document.getElementById('derr').style.display='none';
+  show('sq'); setBar(5);
+
+  try{
+    const res=await fetch('/api/diagnose',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,messages:[{role:'user',content:`動物占いで${y}年${m}月${d}日生まれの動物タイプを判定。コード例:1980/3=9,1990/1=2,1992/11=17,1993/6=49,1995/2=59,1995/4=58。運命数→動物:1,7,42,48=チーター/2,8,41,47=たぬき/3,9,15,34,40,46=猿/4,10,16,33,39,45=コアラ/5,44,50,53,56,59=黒ひょう/6,43,49,54,55,60=虎/11,17,32,38=こじか/12,18,31,37=ゾウ/13,19,24,25,30,36=狼/14,20,23,26,29,35=ひつじ/21,22,27,28=ペガサス/51,52,57,58=ライオン。JSONのみ:{"animal":"動物名"}`}]})
+    });
+    const data=await res.json();
+    animal=JSON.parse(data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim()).animal;
+  }catch(e){
+    const fb=['チーター','たぬき','猿','コアラ','黒ひょう','虎','こじか','ゾウ','狼','ひつじ','ペガサス','ライオン'];
+    animal=fb[((y+m+d)%12)];
+  }
+  loadQ(0);
+}
+
+function loadQ(i){
+  curQ=i;
+  document.getElementById('qno-badge').textContent='Q'+(i+1);
+  document.getElementById('qcounter').textContent=(i+1)+' / '+QS.length;
+  document.getElementById('qtxt').textContent=QS[i].q;
+  setBar(5+Math.round((i/QS.length)*85));
+  const el=document.getElementById('qopts');
+  el.innerHTML='';
+  QS[i].opts.forEach((opt,j)=>{
+    const btn=document.createElement('button');
+    btn.className='q-opt'+(ans[i]===j?' selected':'');
+    btn.textContent=opt.t;
+    btn.onclick=()=>pick(i,j);
+    el.appendChild(btn);
+  });
+}
+
+function pick(qi,ai){
+  if(ans[qi]!==undefined) sc[QS[qi].opts[ans[qi]].j]-=10;
+  ans[qi]=ai; sc[QS[qi].opts[ai].j]+=10;
+  document.querySelectorAll('.q-opt').forEach((b,j)=>b.classList.toggle('selected',j===ai));
+  setTimeout(()=>{ if(qi<QS.length-1) loadQ(qi+1); else showResult(); }, 280);
+}
+
+function prevQ(){
+  if(curQ>0) loadQ(curQ-1);
+  else{ show('s1'); setBar(0); }
+}
+
+async function showResult(){
+  show('sr'); setBar(100);
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result-area').style.display='none';
+
+  let topJob=JOBS[0], topSc=-1;
+  JOBS.forEach(j=>{ if((sc[j]||0)>topSc){ topSc=sc[j]; topJob=j; } });
+  const emoji=EMO[animal]||'';
+
+  try{
+    const res=await fetch('/api/diagnose',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`動物×キャリア診断。動物タイプ:${animal}、職種:${topJob}。JSONのみ:{"title":"あなたは〇〇型${topJob}です！（動物の特性を活かした表現、20字以内）","description":"この組み合わせの特徴・強み・向いている働き方を動物の習性と職業を自然に絡めて3〜4文で。"}`}]})
+    });
+    const data=await res.json();
+    const p=JSON.parse(data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim());
+    document.getElementById('rtitle').textContent=p.title;
+    document.getElementById('rbody').textContent=p.description;
+  }catch(e){
+    document.getElementById('rtitle').textContent=`あなたは${animal}型${topJob}です！`;
+    document.getElementById('rbody').textContent='診断結果の生成中にエラーが発生しました。';
+  }
+
+  document.getElementById('rtag-a').textContent=emoji+' '+animal;
+  document.getElementById('rtag-j').textContent=topJob;
+
+  const ag=ANIMAL_GUIDE[animal]||{desc:'個性豊かなタイプです。',kw:[]};
+  document.getElementById('g-aname').textContent=emoji+' '+animal;
+  document.getElementById('g-adesc').textContent=ag.desc;
+  const akw=document.getElementById('g-akw');
+  akw.innerHTML=''; ag.kw.forEach(k=>{ const s=document.createElement('span');s.className='kw';s.textContent=k;akw.appendChild(s); });
+
+  const jg=JOB_GUIDE[topJob]||{desc:'動物に関わる専門職です。',fit:'',kw:[]};
+  document.getElementById('g-jname').textContent=topJob;
+  document.getElementById('g-jdesc').textContent=jg.desc;
+  document.getElementById('g-jfit').textContent=jg.fit;
+  const jkw=document.getElementById('g-jkw');
+  jkw.innerHTML=''; jg.kw.forEach(k=>{ const s=document.createElement('span');s.className='kw';s.textContent=k;jkw.appendChild(s); });
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('result-area').style.display='block';
+}
+
+function restart(){
+  ans=[]; JOBS.forEach(j=>sc[j]=0); animal=''; curQ=0;
+  ['by','bm','bd'].forEach(id=>document.getElementById(id).value='');
+  show('s1'); setBar(0);
+}
+</script>
+</body>
+</html>
