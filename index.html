@@ -206,12 +206,13 @@ let animal='',curQ=0,ans=[],sc={};
 (function(){
   JOBS.forEach(j=>sc[j]=0);
 
-  // LINEログイン後のリダイレクト処理
-  const pendingAnimal = sessionStorage.getItem('pending_animal');
-  const pendingJob = sessionStorage.getItem('pending_job');
+  // LINEログイン後のリダイレクト処理（URLパラメータから復元）
+  const urlParams = new URLSearchParams(window.location.search);
+  const pendingAnimal = urlParams.get('animal');
+  const pendingJob = urlParams.get('job');
   if (pendingAnimal && pendingJob) {
-    sessionStorage.removeItem('pending_animal');
-    sessionStorage.removeItem('pending_job');
+    // URLパラメータをクリア
+    window.history.replaceState({}, '', window.location.pathname);
     setTimeout(async () => {
       try {
         await liff.init({ liffId: '2009641353-3ExI5ROg' });
@@ -223,6 +224,8 @@ let animal='',curQ=0,ans=[],sc={};
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ token: lineUserId, animal: pendingAnimal, job: pendingJob })
           });
+          // 結果を表示
+          animal = pendingAnimal;
           show('sr'); setBar(100);
           document.getElementById('ldg').style.display='none';
           document.getElementById('rarea').style.display='block';
@@ -267,14 +270,14 @@ async function saveAndOpenLine(){
   let topJob=JOBS[0],topSc=-1;
   JOBS.forEach(j=>{if((sc[j]||0)>topSc){topSc=sc[j];topJob=j;}});
 
-  // 診断結果をsessionStorageに保存（LINEログイン後のリダイレクトに備えて）
-  sessionStorage.setItem('pending_animal', animal);
-  sessionStorage.setItem('pending_job', topJob);
-
   try {
     await liff.init({ liffId: '2009641353-3ExI5ROg' });
     if (!liff.isLoggedIn()) {
-      liff.login({ redirectUri: window.location.href });
+      // URLパラメータに診断結果を含めてリダイレクト
+      const redirectUri = window.location.origin + window.location.pathname
+        + '?animal=' + encodeURIComponent(animal)
+        + '&job=' + encodeURIComponent(topJob);
+      liff.login({ redirectUri });
       return;
     }
     const profile = await liff.getProfile();
@@ -284,31 +287,17 @@ async function saveAndOpenLine(){
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ token: lineUserId, animal, job: topJob })
     });
-    // 結果を画面に表示
-    document.getElementById('before-line').style.display = 'none';
-    document.getElementById('after-line').style.display = 'block';
-
-    // LINEを開く
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    setTimeout(() => {
-      if (isMobile) {
-        window.location.href = 'https://line.me/ti/p/@868fklhh';
-      } else {
-        window.open('https://line.me/ti/p/@868fklhh', '_blank');
-      }
-    }, 1000);
-
-  } catch(e) {
-    console.log('LIFFエラー:', e);
-    // エラーでも結果を表示
-    document.getElementById('before-line').style.display = 'none';
-    document.getElementById('after-line').style.display = 'block';
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = 'https://line.me/ti/p/@868fklhh';
-    } else {
-      window.open('https://line.me/ti/p/@868fklhh', '_blank');
-    }
+    document.getElementById('before-line').style.display='none';
+    document.getElementById('after-line').style.display='block';
+    setTimeout(()=>{
+      const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if(isMobile)window.location.href='https://line.me/ti/p/@868fklhh';
+      else window.open('https://line.me/ti/p/@868fklhh','_blank');
+    },800);
+  } catch(e){
+    console.log('LIFFエラー:',e);
+    document.getElementById('before-line').style.display='none';
+    document.getElementById('after-line').style.display='block';
   }
 }
 
