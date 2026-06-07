@@ -131,44 +131,62 @@ footer{position:relative;z-index:1;width:100%;text-align:center;padding:16px;fon
       <p class="loading-text">あなたの診断を生成中...</p>
     </div>
     <div id="rarea" style="display:none">
-      <div class="result-header">
-        <div class="animal-big" id="r-emoji"></div>
-        <div class="result-tags">
-          <span class="tag tag-animal" id="rtag-a"></span>
-          <span class="tag tag-job" id="rtag-j"></span>
-        </div>
-      </div>
-      <div class="diag-card" id="diag-card">
-        <p class="diag-title" id="rtitle"></p>
-        <p class="diag-body" id="rbody"></p>
-      </div>
-      <div class="guide-card">
-        <div class="guide-header">
-          <div class="guide-emoji" id="g-emoji"></div>
-          <div>
-            <div class="guide-badge badge-animal">🐾 動物タイプ</div>
-            <div class="guide-name" id="g-aname"></div>
+      <!-- LINE登録前：ティザー画面 -->
+      <div id="before-line">
+        <div style="text-align:center;padding:1rem 0 1.5rem;">
+          <div style="font-size:56px;margin-bottom:12px;">🐾</div>
+          <p style="font-size:18px;font-weight:900;color:var(--ink);margin-bottom:8px;">診断が完了しました！</p>
+          <p style="font-size:13px;color:rgba(26,26,46,.5);margin-bottom:20px;">LINEで友だち追加すると<br>あなたの診断結果が届きます✨</p>
+          <div style="background:rgba(26,26,46,.06);border-radius:16px;padding:20px;margin-bottom:20px;filter:blur(5px);pointer-events:none;">
+            <p style="font-size:17px;font-weight:900;">あなたは〇〇型△△です！</p>
+            <p style="font-size:13px;margin-top:8px;color:rgba(26,26,46,.6);">████████████████████████████████████</p>
+            <p style="font-size:13px;color:rgba(26,26,46,.6);">████████████████████████</p>
           </div>
         </div>
-        <p class="guide-text" id="g-adesc"></p>
-        <div class="kw-row" id="g-akw"></div>
+        <button onclick="saveAndOpenLine()" style="display:block;width:100%;padding:16px;background:#06C755;color:white;border:none;border-radius:14px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;font-weight:900;cursor:pointer;text-align:center;box-sizing:border-box;margin-bottom:10px;">📩 LINEで結果を受け取る</button>
+        <button class="btn-outline" onclick="restart()">🔄 もう一度診断する</button>
       </div>
-      <div class="guide-card">
-        <div class="guide-header">
-          <div class="guide-emoji">💼</div>
-          <div>
-            <div class="guide-badge badge-job">職種解説</div>
-            <div class="guide-name" id="g-jname"></div>
+
+      <!-- LINE登録後：結果表示 -->
+      <div id="after-line" style="display:none">
+        <div class="result-header">
+          <div class="animal-big" id="r-emoji"></div>
+          <div class="result-tags">
+            <span class="tag tag-animal" id="rtag-a"></span>
+            <span class="tag tag-job" id="rtag-j"></span>
           </div>
         </div>
-        <p class="section-label label-job">仕事内容</p>
-        <p class="guide-text" id="g-jdesc"></p>
-        <p class="section-label label-fit">向いている人</p>
-        <p class="guide-text" id="g-jfit"></p>
-        <div class="kw-row" id="g-jkw"></div>
+        <div class="diag-card" id="diag-card">
+          <p class="diag-title" id="rtitle"></p>
+          <p class="diag-body" id="rbody"></p>
+        </div>
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-emoji" id="g-emoji"></div>
+            <div>
+              <div class="guide-badge badge-animal">🐾 動物タイプ</div>
+              <div class="guide-name" id="g-aname"></div>
+            </div>
+          </div>
+          <p class="guide-text" id="g-adesc"></p>
+          <div class="kw-row" id="g-akw"></div>
+        </div>
+        <div class="guide-card">
+          <div class="guide-header">
+            <div class="guide-emoji">💼</div>
+            <div>
+              <div class="guide-badge badge-job">職種解説</div>
+              <div class="guide-name" id="g-jname"></div>
+            </div>
+          </div>
+          <p class="section-label label-job">仕事内容</p>
+          <p class="guide-text" id="g-jdesc"></p>
+          <p class="section-label label-fit">向いている人</p>
+          <p class="guide-text" id="g-jfit"></p>
+          <div class="kw-row" id="g-jkw"></div>
+        </div>
+        <button class="btn-outline" onclick="restart()">🔄 もう一度診断する</button>
       </div>
-      <button onclick="saveAndOpenLine()" style="display:block;width:100%;padding:15px;background:#06C755;color:white;border:none;border-radius:14px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;font-weight:900;cursor:pointer;text-align:center;box-sizing:border-box;">📩 LINEで結果を受け取る</button>
-<button class="btn-outline" onclick="restart()">🔄 もう一度診断する</button>
     </div>
   </div>
 </main>
@@ -210,14 +228,25 @@ async function saveAndOpenLine(){
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ token: lineUserId, animal, job: topJob })
     });
+    // 結果を画面に表示
+    document.getElementById('before-line').style.display = 'none';
+    document.getElementById('after-line').style.display = 'block';
+
+    // LINEを開く
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = 'https://line.me/ti/p/@868fklhh';
-    } else {
-      window.open('https://line.me/ti/p/@868fklhh', '_blank');
-    }
+    setTimeout(() => {
+      if (isMobile) {
+        window.location.href = 'https://line.me/ti/p/@868fklhh';
+      } else {
+        window.open('https://line.me/ti/p/@868fklhh', '_blank');
+      }
+    }, 1000);
+
   } catch(e) {
     console.log('LIFFエラー:', e);
+    // エラーでも結果を表示
+    document.getElementById('before-line').style.display = 'none';
+    document.getElementById('after-line').style.display = 'block';
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
       window.location.href = 'https://line.me/ti/p/@868fklhh';
