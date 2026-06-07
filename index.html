@@ -203,7 +203,59 @@ const na={1:'チーター',2:'たぬき',3:'猿',4:'コアラ',5:'黒ひょう',
 const yd=ct[y];if(!yd){const fb=['チーター','たぬき','猿','コアラ','黒ひょう','虎','こじか','ゾウ','狼','ひつじ','ペガサス','ライオン'];return fb[((y+m+d)%12)];}
 let c=yd[m]+d;if(c>60)c-=60;return na[c]||'チーター';}
 let animal='',curQ=0,ans=[],sc={};
-(function(){JOBS.forEach(j=>sc[j]=0);const ys=document.getElementById('by');for(let y=2010;y>=1940;y--)ys.innerHTML+=`<option value="${y}">${y}年</option>`;const ms=document.getElementById('bm');for(let m=1;m<=12;m++)ms.innerHTML+=`<option value="${m}">${m}月</option>`;const ds=document.getElementById('bd');for(let d=1;d<=31;d++)ds.innerHTML+=`<option value="${d}">${d}日</option>`;})();
+(function(){
+  JOBS.forEach(j=>sc[j]=0);
+
+  // LINEログイン後のリダイレクト処理
+  const pendingAnimal = sessionStorage.getItem('pending_animal');
+  const pendingJob = sessionStorage.getItem('pending_job');
+  if (pendingAnimal && pendingJob) {
+    sessionStorage.removeItem('pending_animal');
+    sessionStorage.removeItem('pending_job');
+    setTimeout(async () => {
+      try {
+        await liff.init({ liffId: '2009641353-3ExI5ROg' });
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          const lineUserId = profile.userId;
+          await fetch('/api/save-result', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ token: lineUserId, animal: pendingAnimal, job: pendingJob })
+          });
+          show('sr'); setBar(100);
+          document.getElementById('ldg').style.display='none';
+          document.getElementById('rarea').style.display='block';
+          document.getElementById('before-line').style.display='none';
+          document.getElementById('after-line').style.display='block';
+          const at=ANIMAL_THEMES[pendingAnimal]||{emoji:'🐾',theme:'theme-teal'};
+          document.getElementById('r-emoji').textContent=at.emoji;
+          document.getElementById('rtag-a').textContent=at.emoji+' '+pendingAnimal;
+          document.getElementById('rtag-j').textContent=pendingJob;
+          const result=DIAGNOSIS_RESULTS[pendingAnimal]&&DIAGNOSIS_RESULTS[pendingAnimal][pendingJob]?DIAGNOSIS_RESULTS[pendingAnimal][pendingJob]:{title:`あなたは${pendingAnimal}型${pendingJob}です！`,description:'あなたの個性を活かしたキャリアが見つかりました。'};
+          document.getElementById('rtitle').textContent=result.title;
+          document.getElementById('rbody').textContent=result.description;
+          const ag=ANIMAL_GUIDE[pendingAnimal]||{desc:'',kw:[]};
+          document.getElementById('g-emoji').textContent=at.emoji;
+          document.getElementById('g-aname').textContent=pendingAnimal;
+          document.getElementById('g-adesc').textContent=ag.desc;
+          const akw=document.getElementById('g-akw');akw.innerHTML='';
+          ag.kw.forEach(k=>{const s=document.createElement('span');s.className='kw';s.textContent=k;akw.appendChild(s);});
+          const jg=JOB_GUIDE[pendingJob]||{desc:'',fit:'',kw:[]};
+          document.getElementById('g-jname').textContent=pendingJob;
+          document.getElementById('g-jdesc').textContent=jg.desc;
+          document.getElementById('g-jfit').textContent=jg.fit;
+          const jkw=document.getElementById('g-jkw');jkw.innerHTML='';
+          jg.kw.forEach(k=>{const s=document.createElement('span');s.className='kw';s.textContent=k;jkw.appendChild(s);});
+          setTimeout(()=>{
+            const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if(isMobile)window.location.href='https://line.me/ti/p/@868fklhh';
+            else window.open('https://line.me/ti/p/@868fklhh','_blank');
+          },500);
+        }
+      } catch(e){console.log('リダイレクト後エラー:',e);}
+    },100);
+  }const ys=document.getElementById('by');for(let y=2010;y>=1940;y--)ys.innerHTML+=`<option value="${y}">${y}年</option>`;const ms=document.getElementById('bm');for(let m=1;m<=12;m++)ms.innerHTML+=`<option value="${m}">${m}月</option>`;const ds=document.getElementById('bd');for(let d=1;d<=31;d++)ds.innerHTML+=`<option value="${d}">${d}日</option>`;})();
 function setBar(p){document.getElementById('bar').style.width=p+'%';}
 function show(id){document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function startQuiz(){const y=parseInt(document.getElementById('by').value);const m=parseInt(document.getElementById('bm').value);const d=parseInt(document.getElementById('bd').value);if(!y||!m||!d){document.getElementById('derr').style.display='block';return;}document.getElementById('derr').style.display='none';animal=calcAnimal(y,m,d);show('sq');setBar(5);loadQ(0);}
@@ -214,6 +266,10 @@ function showResult(){show('sr');setBar(100);document.getElementById('ldg').styl
 async function saveAndOpenLine(){
   let topJob=JOBS[0],topSc=-1;
   JOBS.forEach(j=>{if((sc[j]||0)>topSc){topSc=sc[j];topJob=j;}});
+
+  // 診断結果をsessionStorageに保存（LINEログイン後のリダイレクトに備えて）
+  sessionStorage.setItem('pending_animal', animal);
+  sessionStorage.setItem('pending_job', topJob);
 
   try {
     await liff.init({ liffId: '2009641353-3ExI5ROg' });
