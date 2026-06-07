@@ -207,7 +207,13 @@ async function saveAndOpenLine(){
     });
   } catch(e) { console.log('保存エラー:', e); }
   // LINEに遷移
-  window.open('https://line.me/R/ti/p/@868fklhh', '_blank');
+  // スマホ・PCどちらでも動くLINE URL
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    window.location.href = 'https://line.me/ti/p/@868fklhh';
+  } else {
+    window.open('https://line.me/ti/p/@868fklhh', '_blank');
+  }
 }
 function restart(){ans=[];JOBS.forEach(j=>sc[j]=0);animal='';curQ=0;['by','bm','bd'].forEach(id=>document.getElementById(id).value='');show('s1');setBar(0);}
 </script>
