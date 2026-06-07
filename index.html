@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>動物×キャリア診断 | AniCari</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='80' height='80' rx='18' fill='white' stroke='%23F0E0EC' stroke-width='2'/%3E%3Cellipse cx='18' cy='40' rx='11' ry='9' fill='%23FF6B9D'/%3E%3Cellipse cx='9' cy='30' rx='4.5' ry='5' fill='%23FFB347'/%3E%3Cellipse cx='18' cy='27' rx='4.5' ry='5' fill='%237BC8A4'/%3E%3Cellipse cx='27' cy='30' rx='4.5' ry='5' fill='%239B8FE8'/%3E%3Cellipse cx='14' cy='41' rx='3' ry='2.5' fill='white'/%3E%3Cellipse cx='18' cy='44' rx='3' ry='2.5' fill='white'/%3E%3Cellipse cx='22' cy='41' rx='3' ry='2.5' fill='white'/%3E%3Ctext x='54' y='37' text-anchor='middle' font-family='Arial Black,sans-serif' font-weight='900' font-size='15' fill='%231A1A2E'%3EAni%3C/text%3E%3Ctext x='54' y='54' text-anchor='middle' font-family='Arial Black,sans-serif' font-weight='900' font-size='15' fill='%23FF6B9D'%3ECari%3C/text%3E%3C/svg%3E">
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
@@ -193,28 +194,39 @@ function pick(qi,ai){if(ans[qi]!==undefined)sc[QS[qi].opts[ans[qi]].j]-=10;ans[q
 function prevQ(){if(curQ>0)loadQ(curQ-1);else{show('s1');setBar(0);}}
 function showResult(){show('sr');setBar(100);document.getElementById('ldg').style.display='block';document.getElementById('rarea').style.display='none';let topJob=JOBS[0],topSc=-1;JOBS.forEach(j=>{if((sc[j]||0)>topSc){topSc=sc[j];topJob=j;}});const at=ANIMAL_THEMES[animal]||{emoji:'🐾',theme:'theme-teal'};const result=DIAGNOSIS_RESULTS[animal]&&DIAGNOSIS_RESULTS[animal][topJob]?DIAGNOSIS_RESULTS[animal][topJob]:{title:`あなたは${animal}型${topJob}です！`,description:'あなたの個性を活かしたキャリアが見つかりました。'};document.getElementById('r-emoji').textContent=at.emoji;document.getElementById('rtag-a').textContent=at.emoji+' '+animal;document.getElementById('rtag-j').textContent=topJob;const card=document.getElementById('diag-card');card.className='diag-card '+at.theme;card.setAttribute('data-emoji',at.emoji);document.getElementById('rtitle').textContent=result.title;document.getElementById('rbody').textContent=result.description;const ag=ANIMAL_GUIDE[animal]||{desc:'',kw:[]};document.getElementById('g-emoji').textContent=at.emoji;document.getElementById('g-aname').textContent=animal;document.getElementById('g-adesc').textContent=ag.desc;const akw=document.getElementById('g-akw');akw.innerHTML='';ag.kw.forEach(k=>{const s=document.createElement('span');s.className='kw';s.textContent=k;akw.appendChild(s);});const jg=JOB_GUIDE[topJob]||{desc:'',fit:'',kw:[]};document.getElementById('g-jname').textContent=topJob;document.getElementById('g-jdesc').textContent=jg.desc;document.getElementById('g-jfit').textContent=jg.fit;const jkw=document.getElementById('g-jkw');jkw.innerHTML='';jg.kw.forEach(k=>{const s=document.createElement('span');s.className='kw';s.textContent=k;jkw.appendChild(s);});document.getElementById('ldg').style.display='none';document.getElementById('rarea').style.display='block';}
 async function saveAndOpenLine(){
-  // 診断結果をサーバーに保存
-  const token = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2,9);
+  let topJob=JOBS[0],topSc=-1;
+  JOBS.forEach(j=>{if((sc[j]||0)>topSc){topSc=sc[j];topJob=j;}});
+
   try {
+    await liff.init({ liffId: '2009641353-3ExI5ROg' });
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: window.location.href });
+      return;
+    }
+    const profile = await liff.getProfile();
+    const lineUserId = profile.userId;
     await fetch('/api/save-result', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ token, animal, job: (()=>{
-        let topJob=JOBS[0],topSc=-1;
-        JOBS.forEach(j=>{if((sc[j]||0)>topSc){topSc=sc[j];topJob=j;}});
-        return topJob;
-      })() })
+      body: JSON.stringify({ token: lineUserId, animal, job: topJob })
     });
-  } catch(e) { console.log('保存エラー:', e); }
-  // LINEに遷移
-  // スマホ・PCどちらでも動くLINE URL
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    window.location.href = 'https://line.me/ti/p/@868fklhh';
-  } else {
-    window.open('https://line.me/ti/p/@868fklhh', '_blank');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.location.href = 'https://line.me/ti/p/@868fklhh';
+    } else {
+      window.open('https://line.me/ti/p/@868fklhh', '_blank');
+    }
+  } catch(e) {
+    console.log('LIFFエラー:', e);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.location.href = 'https://line.me/ti/p/@868fklhh';
+    } else {
+      window.open('https://line.me/ti/p/@868fklhh', '_blank');
+    }
   }
 }
+
 function restart(){ans=[];JOBS.forEach(j=>sc[j]=0);animal='';curQ=0;['by','bm','bd'].forEach(id=>document.getElementById(id).value='');show('s1');setBar(0);}
 </script>
 </body>
